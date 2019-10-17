@@ -215,6 +215,7 @@
     },
     "setTeamInfo": {
       "teamnames": "I.Set<Types.Teamname>",
+      "teamIDs": "Array<Types.TeamID>",
       "teammembercounts": "I.Map<Types.Teamname, number>",
       "teamNameToIsOpen": "I.Map<Types.Teamname, boolean>",
       "teamNameToRole": "I.Map<Types.Teamname, Types.MaybeTeamRoleType>",
