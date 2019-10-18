@@ -780,7 +780,12 @@ func (k *KeybaseServiceBase) LoadTeamPlusKeys(
 			satisfiesDesires = desiredKeyGen <= cachedTeamInfo.LatestKeyGen
 		}
 
-		if satisfiesDesires && desiredUser.Uid.Exists() {
+		// For now, the membership of a public folder can never
+		// change, so don't bother to force a re-load it if it's
+		// already in the cache.  If they ever can change in the
+		// future, it's probably good enough to wait for a
+		// notification anyway.
+		if satisfiesDesires && desiredUser.Uid.Exists() && !tid.IsPublic() {
 			// If the user is in the writer map, that satisfies none, reader
 			// or writer desires.
 			satisfiesDesires = cachedTeamInfo.Writers[desiredUser.Uid]
