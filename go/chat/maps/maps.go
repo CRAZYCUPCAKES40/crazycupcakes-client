@@ -1,16 +1,10 @@
 package maps
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -27,10 +21,9 @@ const mapsHost = "maps.googleapis.com"
 const scale = 2
 const locationMapWidth = 640
 const locationMapHeight = 350
-const liveMapWidth = 640
-const liveMapHeight = 270
-const liveMapWidthScaled = liveMapWidth / scale
-const liveMapHeightScaled = liveMapHeight / scale
+
+// const liveMapWidthScaled = liveMapWidth / scale
+// const liveMapHeightScaled = liveMapHeight / scale
 
 func GetMapURL(ctx context.Context, apiKeySource types.ExternalAPIKeySource, lat, lon float64) (string, error) {
 	return GetCustomMapURL(ctx, apiKeySource, lat, lon, locationMapWidth, locationMapHeight)
@@ -51,65 +44,65 @@ func GetCustomMapURL(ctx context.Context, apiKeySource types.ExternalAPIKeySourc
 
 }
 
-func GetLiveMapURL(ctx context.Context, apiKeySource types.ExternalAPIKeySource, coords []chat1.Coordinate) (string, error) {
-	if len(coords) == 0 {
-		return "", errors.New("empty coords")
-	}
-	key, err := apiKeySource.GetKey(ctx, chat1.ExternalAPIKeyTyp_GOOGLEMAPS)
-	if err != nil {
-		return "", err
-	}
-	var pathStr, centerStr string
-	last := coords[len(coords)-1]
-	if len(coords) > 1 {
-		pathStr = "path=color:0xff0000ff|weight:3"
-		for _, c := range coords {
-			pathStr += fmt.Sprintf("|%f,%f", c.Lat, c.Lon)
-		}
-		pathStr += "&"
-	} else {
-		centerStr = fmt.Sprintf("center=%f,%f&", last.Lat, last.Lon)
-	}
-	url := fmt.Sprintf(
-		"https://%s/maps/api/staticmap?%s%smarkers=color:red%%7Csize:tiny%%7C%f,%f&size=%dx%d&scale=%d&key=%s",
-		MapsProxy, centerStr, pathStr, last.Lat, last.Lon, liveMapWidthScaled,
-		liveMapHeightScaled, scale, key.Googlemaps())
-	return url, nil
-}
+// func GetLiveMapURL(ctx context.Context, apiKeySource types.ExternalAPIKeySource, coords []chat1.Coordinate) (string, error) {
+// 	if len(coords) == 0 {
+// 		return "", errors.New("empty coords")
+// 	}
+// 	key, err := apiKeySource.GetKey(ctx, chat1.ExternalAPIKeyTyp_GOOGLEMAPS)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	var pathStr, centerStr string
+// 	last := coords[len(coords)-1]
+// 	if len(coords) > 1 {
+// 		pathStr = "path=color:0xff0000ff|weight:3"
+// 		for _, c := range coords {
+// 			pathStr += fmt.Sprintf("|%f,%f", c.Lat, c.Lon)
+// 		}
+// 		pathStr += "&"
+// 	} else {
+// 		centerStr = fmt.Sprintf("center=%f,%f&", last.Lat, last.Lon)
+// 	}
+// 	url := fmt.Sprintf(
+// 		"https://%s/maps/api/staticmap?%s%smarkers=color:red%%7Csize:tiny%%7C%f,%f&size=%dx%d&scale=%d&key=%s",
+// 		MapsProxy, centerStr, pathStr, last.Lat, last.Lon, liveMapWidthScaled,
+// 		liveMapHeightScaled, scale, key.Googlemaps())
+// 	return url, nil
+// }
 
-func CombineMaps(ctx context.Context, locReader, liveReader io.Reader) (res io.ReadCloser, length int64, err error) {
-	sepHeight := 3
-	locPng, err := png.Decode(locReader)
-	if err != nil {
-		return res, length, err
-	}
-	livePng, err := png.Decode(liveReader)
-	if err != nil {
-		return res, length, err
-	}
-	combined := image.NewRGBA(image.Rect(0, 0, locationMapWidth, locationMapHeight+liveMapHeight+sepHeight))
-	for x := 0; x < locPng.Bounds().Dx(); x++ {
-		for y := 0; y < locPng.Bounds().Dy(); y++ {
-			combined.Set(x, y, locPng.At(x, y))
-		}
-	}
-	for x := 0; x < locPng.Bounds().Dx(); x++ {
-		for y := 0; y < sepHeight; y++ {
-			combined.Set(x, locationMapHeight+y, color.Black)
-		}
-	}
-	for x := 0; x < livePng.Bounds().Dx(); x++ {
-		for y := 0; y < livePng.Bounds().Dy(); y++ {
-			combined.Set(x, y+locationMapHeight+sepHeight, livePng.At(x, y))
-		}
-	}
-	var buf bytes.Buffer
-	err = png.Encode(&buf, combined)
-	if err != nil {
-		return res, length, err
-	}
-	return ioutil.NopCloser(bytes.NewReader(buf.Bytes())), int64(buf.Len()), nil
-}
+// func CombineMaps(ctx context.Context, locReader, liveReader io.Reader) (res io.ReadCloser, length int64, err error) {
+// 	sepHeight := 3
+// 	locPng, err := png.Decode(locReader)
+// 	if err != nil {
+// 		return res, length, err
+// 	}
+// 	livePng, err := png.Decode(liveReader)
+// 	if err != nil {
+// 		return res, length, err
+// 	}
+// 	combined := image.NewRGBA(image.Rect(0, 0, locationMapWidth, locationMapHeight+liveMapHeight+sepHeight))
+// 	for x := 0; x < locPng.Bounds().Dx(); x++ {
+// 		for y := 0; y < locPng.Bounds().Dy(); y++ {
+// 			combined.Set(x, y, locPng.At(x, y))
+// 		}
+// 	}
+// 	for x := 0; x < locPng.Bounds().Dx(); x++ {
+// 		for y := 0; y < sepHeight; y++ {
+// 			combined.Set(x, locationMapHeight+y, color.Black)
+// 		}
+// 	}
+// 	for x := 0; x < livePng.Bounds().Dx(); x++ {
+// 		for y := 0; y < livePng.Bounds().Dy(); y++ {
+// 			combined.Set(x, y+locationMapHeight+sepHeight, livePng.At(x, y))
+// 		}
+// 	}
+// 	var buf bytes.Buffer
+// 	err = png.Encode(&buf, combined)
+// 	if err != nil {
+// 		return res, length, err
+// 	}
+// 	return ioutil.NopCloser(bytes.NewReader(buf.Bytes())), int64(buf.Len()), nil
+// }
 
 func GetExternalMapURL(ctx context.Context, lat, lon float64) string {
 	return fmt.Sprintf("https://www.google.com/maps/place/%f,%f/@%f,%f,15z", lat, lon, lat, lon)

@@ -40,7 +40,6 @@ func (s *Scraper) scrapeMap(ctx context.Context, uri string) (res chat1.UnfurlRa
 		return res, err
 	}
 	skey := puri.Query().Get("livekey")
-	var liveMapURL *string
 	var timeStr string
 	siteName := "Location Share"
 	mapURL, err := maps.GetMapURL(ctx, s.G().ExternalAPIKeySource, lat, lon)
@@ -52,30 +51,30 @@ func (s *Scraper) scrapeMap(ctx context.Context, uri string) (res chat1.UnfurlRa
 	var liveLocationEndTime *gregor1.Time
 	if len(skey) > 0 {
 		key := types.LiveLocationKey(skey)
-		coords := s.G().LiveLocationTracker.GetCoordinates(ctx, key)
+		// coords := s.G().LiveLocationTracker.GetCoordinates(ctx, key)
 		endTime := s.G().LiveLocationTracker.GetEndTime(ctx, key)
 		if endTime != nil {
 			liveLocationEndTime = new(gregor1.Time)
 			*liveLocationEndTime = gregor1.ToTime(*endTime)
 		}
-		liveMapURL = new(string)
-		if *liveMapURL, err = maps.GetLiveMapURL(ctx, s.G().ExternalAPIKeySource, coords); err != nil {
-			return res, err
-		}
+		// liveMapURL = new(string)
+		// if *liveMapURL, err = maps.GetLiveMapURL(ctx, s.G().ExternalAPIKeySource, coords); err != nil {
+		// 	return res, err
+		// }
 		timeStr = fmt.Sprintf("Posted %s.", now.Format("15:04:05 MST"))
 		siteName = "Live Location Share"
 		if liveLocationDone {
+			mapURL = ""
 			siteName += " (finished)"
 		}
 	}
 	desc := fmt.Sprintf("Accurate to %dm. %s", int(acc), timeStr)
 	return chat1.NewUnfurlRawWithMaps(chat1.UnfurlMapsRaw{
-		Title:           "Open this location with Google Maps",
-		Url:             linkURL,
-		SiteName:        siteName,
-		ImageUrl:        mapURL,
-		Description:     desc,
-		HistoryImageUrl: liveMapURL,
+		Title:       "Open this location with Google Maps",
+		Url:         linkURL,
+		SiteName:    siteName,
+		ImageUrl:    mapURL,
+		Description: desc,
 		Coord: chat1.Coordinate{
 			Lat:      lat,
 			Lon:      lon,
