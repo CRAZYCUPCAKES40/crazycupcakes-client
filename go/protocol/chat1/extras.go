@@ -2621,3 +2621,7 @@ func (r UIInboxReselectInfo) String() string {
 	}
 	return fmt.Sprintf("[oldconv: %s newconv: %s]", r.OldConvID, newConvStr)
 }
+
+func (c UserBotCommandOutput) Matches(text string) bool {
+	return strings.HasPrefix(text, fmt.Sprintf("!%s ", c.Name))
+}
